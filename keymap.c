@@ -16,6 +16,7 @@
 
 #include "keycodes.h"
 #include "keymap_us.h"
+#include "quantum_keycodes.h"
 #include QMK_KEYBOARD_H
 #include "keychron_common.h"
 #include "features/custom_shift_keys.h"
@@ -54,10 +55,10 @@ uint8_t NUM_CUSTOM_SHIFT_KEYS = sizeof(custom_shift_keys) / sizeof(custom_shift_
 const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 [MAC_BASE] = LAYOUT_ansi_84(
      KC_ESC,   KC_BRID,  KC_BRIU,  KC_MCTRL, KC_LNPAD, RGB_VAD,  RGB_VAI,  KC_MPRV,  KC_MPLY,  KC_MNXT,  KC_MUTE,  KC_VOLD,  KC_VOLU,  KC_SNAP,  KC_DEL,   RGB_MOD,
-     KC_GRV,   KC_EXCLAIM,     KC_AT,     KC_HASH,     KC_DOLLAR,     KC_PERCENT,     KC_CIRCUMFLEX,     KC_AMPERSAND,     KC_ASTERISK,     KC_LEFT_PAREN,     KC_RIGHT_PAREN,     KC_MINS,  KC_EQL,   KC_BSPC,            KC_PGUP,
+     KC_GRV,KC_EXCLAIM,KC_AT,KC_HASH,KC_DOLLAR,KC_PERCENT,KC_CIRCUMFLEX,KC_AMPERSAND,KC_ASTERISK,KC_LEFT_PAREN,KC_RIGHT_PAREN,KC_MINS,KC_EQL,CTL_B,KC_PGUP,
      KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,  KC_BSLS,            KC_PGDN,
-     KC_BACKSPACE,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_COLON,  KC_QUOT,            KC_ENT,             KC_HOME,
-     KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,            CTL_B,  KC_UP,    KC_END,
+     KC_BACKSPACE,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_COLON,  KC_QUOT,            KC_ENT,      KC_HOME,
+     KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,           KC_RSFT,  KC_UP,    KC_END,
      KC_LCTL,  KC_LOPTN, KC_LCMMD,                               KC_SPC,                                 KC_ESC,MO(MAC_FN),KC_ROPTN,  KC_LEFT,  KC_DOWN,  KC_RGHT),
 
 [MAC_FN] = LAYOUT_ansi_84(
@@ -86,15 +87,35 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
 };
 
 // clang-format on
+// Track whether Left Shift is currently held
+static bool lshift_held = false;
+
 bool process_record_user(uint16_t keycode, keyrecord_t *record) {
     if (!process_custom_shift_keys(keycode, record)) { return false; }
-   switch (keycode) {
+
+    switch (keycode) {
+        case KC_LSFT:
+            lshift_held = record->event.pressed;
+            break;
+
+        case KC_RSFT:
+            if (record->event.pressed) {
+                if (lshift_held) {
+                    // If Left Shift is held, send Ctrl+Y instead of RShift
+                    SEND_STRING(SS_LCTL("y"));
+                    return false; // suppress default RShift
+                }
+            }
+            break; // allow RShift to work normally if LShift not held
+
         case CTL_B:
             if (record->event.pressed) {
                 SEND_STRING(SS_LCTL("b"));  // Sends Ctrl+B
             }
             return false;
+        break;
     }
+
     if (!process_record_keychron_common(keycode, record)) {
         return false;
     }
