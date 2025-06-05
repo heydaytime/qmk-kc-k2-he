@@ -31,6 +31,7 @@ enum layers {
 
 enum custom_keycodes {
     CTL_B = SAFE_RANGE,
+    CTL_G
 };
 // https://getreuer.info/posts/keyboards/custom-shift-keys/index.html#add-custom-shift-keys-to-your-keymap
 const custom_shift_key_t custom_shift_keys[] = {
@@ -58,7 +59,7 @@ const uint16_t PROGMEM keymaps[][MATRIX_ROWS][MATRIX_COLS] = {
      KC_GRV,KC_EXCLAIM,KC_AT,KC_HASH,KC_DOLLAR,KC_PERCENT,KC_CIRCUMFLEX,KC_AMPERSAND,KC_ASTERISK,KC_LEFT_PAREN,KC_RIGHT_PAREN,KC_MINS,KC_EQL,CTL_B,KC_PGUP,
      KC_TAB,   KC_Q,     KC_W,     KC_E,     KC_R,     KC_T,     KC_Y,     KC_U,     KC_I,     KC_O,     KC_P,     KC_LBRC,  KC_RBRC,  KC_BSLS,            KC_PGDN,
      KC_BACKSPACE,  KC_A,     KC_S,     KC_D,     KC_F,     KC_G,     KC_H,     KC_J,     KC_K,     KC_L,     KC_COLON,  KC_QUOT,            KC_ENT,      KC_HOME,
-     KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,           KC_RSFT,  KC_UP,    KC_END,
+     KC_LSFT,            KC_Z,     KC_X,     KC_C,     KC_V,     KC_B,     KC_N,     KC_M,     KC_COMM,  KC_DOT,   KC_SLSH,           CTL_G,  KC_UP,    KC_END,
      KC_LCTL,  KC_LOPTN, KC_LCMMD,                               KC_SPC,                                 KC_ESC,MO(MAC_FN),KC_ROPTN,  KC_LEFT,  KC_DOWN,  KC_RGHT),
 
 [MAC_FN] = LAYOUT_ansi_84(
@@ -114,6 +115,14 @@ bool process_record_user(uint16_t keycode, keyrecord_t *record) {
             }
             return false;
         break;
+
+        case CTL_G:
+            if (record->event.pressed) {
+                SEND_STRING(SS_LCTL("g"));  // Sends Ctrl+G
+            }
+            return false;
+        break;
+
     }
 
     if (!process_record_keychron_common(keycode, record)) {
